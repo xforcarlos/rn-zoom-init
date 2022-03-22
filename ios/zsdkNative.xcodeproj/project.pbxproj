@@ -16,6 +16,8 @@
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		A7A4D90927EA39B4003AF5C0 /* MobileRTC.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = A7A4D90727EA39AF003AF5C0 /* MobileRTC.xcframework */; };
 		A7A4D90A27EA39B4003AF5C0 /* MobileRTC.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = A7A4D90727EA39AF003AF5C0 /* MobileRTC.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A7A4D90F27EA3EEC003AF5C0 /* RCTzoom.m in Sources */ = {isa = PBXBuildFile; fileRef = A7A4D90E27EA3EEC003AF5C0 /* RCTzoom.m */; };
+		A7A4D91127EA40AA003AF5C0 /* ZoomManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A7A4D91027EA40AA003AF5C0 /* ZoomManager.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,6 +59,10 @@
 		6C97AB639B58BBB4B15BBE30 /* Pods-zsdkNative-zsdkNativeTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-zsdkNative-zsdkNativeTests.debug.xcconfig"; path = "Target Support Files/Pods-zsdkNative-zsdkNativeTests/Pods-zsdkNative-zsdkNativeTests.debug.xcconfig"; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = zsdkNative/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		A7A4D90727EA39AF003AF5C0 /* MobileRTC.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = MobileRTC.xcframework; sourceTree = "<group>"; };
+		A7A4D90D27EA3EA4003AF5C0 /* RCTzoom.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RCTzoom.h; path = zsdkNative/RCTzoom.h; sourceTree = "<group>"; };
+		A7A4D90E27EA3EEC003AF5C0 /* RCTzoom.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = RCTzoom.m; path = zsdkNative/RCTzoom.m; sourceTree = "<group>"; };
+		A7A4D91027EA40AA003AF5C0 /* ZoomManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = ZoomManager.m; path = zsdkNative/ZoomManager.m; sourceTree = "<group>"; };
+		A7A4D91227EA41B4003AF5C0 /* ZoomManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ZoomManager.h; path = zsdkNative/ZoomManager.h; sourceTree = "<group>"; };
 		ABFE59519B596E51CEFDCCC0 /* libPods-zsdkNative-zsdkNativeTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-zsdkNative-zsdkNativeTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C0A881CF5CF3F2B244570E2A /* Pods-zsdkNative.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-zsdkNative.debug.xcconfig"; path = "Target Support Files/Pods-zsdkNative/Pods-zsdkNative.debug.xcconfig"; sourceTree = "<group>"; };
 		D00AAFFCFCFDA5787532823F /* Pods-zsdkNative.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-zsdkNative.release.xcconfig"; path = "Target Support Files/Pods-zsdkNative/Pods-zsdkNative.release.xcconfig"; sourceTree = "<group>"; };
@@ -110,6 +116,10 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB71A68108700A75B9A /* main.m */,
+				A7A4D90D27EA3EA4003AF5C0 /* RCTzoom.h */,
+				A7A4D90E27EA3EEC003AF5C0 /* RCTzoom.m */,
+				A7A4D91027EA40AA003AF5C0 /* ZoomManager.m */,
+				A7A4D91227EA41B4003AF5C0 /* ZoomManager.h */,
 			);
 			name = zsdkNative;
 			sourceTree = "<group>";
@@ -430,6 +440,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A7A4D91127EA40AA003AF5C0 /* ZoomManager.m in Sources */,
+				A7A4D90F27EA3EEC003AF5C0 /* RCTzoom.m in Sources */,
 				13B07FBC1A68108700A75B9A /* AppDelegate.m in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
 			);

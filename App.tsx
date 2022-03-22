@@ -13,47 +13,26 @@ import {
   SafeAreaView,
   ScrollView,
   StatusBar,
-  StyleSheet,
-  Text,
   useColorScheme,
   View,
+  Button,
 } from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+import {Colors, Header} from 'react-native/Libraries/NewAppScreen';
+import {initZoom, joinMeeting, startMeeting} from './nativeModules/RNZoomSDK';
 
-const Section: React.FC<{
-  title: string;
-}> = ({children, title}) => {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
+const ZOOM_CONFIG = {
+  ZOOM_PUBLIC_KEY: '',
+  ZOOM_PRIVATE_KEY: '',
+  ZOOM_DOMAIN: 'zoom.us',
+  JWT_API_KEY: '',
+  JWT_API_SECRET_KEY: '',
 };
+
+const meetingNo = '';
+const pwd = '';
+const userId = '';
+const userName = '';
 
 const App = () => {
   const isDarkMode = useColorScheme() === 'dark';
@@ -71,45 +50,41 @@ const App = () => {
         <Header />
         <View
           style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
+            backgroundColor: Colors.white,
+            justifyContent: 'space-around',
           }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
+          <Button
+            title="Init ZOOM"
+            onPress={() =>
+              initZoom(
+                ZOOM_CONFIG.ZOOM_PUBLIC_KEY,
+                ZOOM_CONFIG.ZOOM_PRIVATE_KEY,
+                ZOOM_CONFIG.ZOOM_DOMAIN,
+              )
+            }
+          />
+
+          <Button
+            title="joinMeeting"
+            // onPress={() => joinMeeting(userName, meetingNo, pwd)}
+          />
+
+          <Button
+            title="start meeting"
+            // onPress={() =>
+            // startMeeting(
+            //   meetingNo,
+            //   userName,
+            //   userId,
+            //   ZOOM_CONFIG.JWT_API_KEY,
+            //   ZOOM_CONFIG.JWT_API_SECRET_KEY,
+            // )
+            // }
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
 
 export default App;
