@@ -8,7 +8,7 @@
  * @format
  */
 
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -20,26 +20,19 @@ import {
 
 import {Colors, Header} from 'react-native/Libraries/NewAppScreen';
 import {initZoom, joinMeeting, startMeeting} from './nativeModules/RNZoomSDK';
-
-const ZOOM_CONFIG = {
-  ZOOM_PUBLIC_KEY: '',
-  ZOOM_PRIVATE_KEY: '',
-  ZOOM_DOMAIN: 'zoom.us',
-  JWT_API_KEY: '',
-  JWT_API_SECRET_KEY: '',
-};
-
-const meetingNo = '';
-const pwd = '';
-const userId = '';
-const userName = '';
-
+import {fetchData} from './data';
 const App = () => {
   const isDarkMode = useColorScheme() === 'dark';
-
+  const [data, setdata] = useState<any>(null);
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
   };
+
+  useEffect(() => {
+    (async () => {
+      setdata(await fetchData());
+    })();
+  }, []);
 
   return (
     <SafeAreaView style={backgroundStyle}>
@@ -54,32 +47,31 @@ const App = () => {
             justifyContent: 'space-around',
           }}>
           <Button
+            disabled={data ? false : true}
             title="Init ZOOM"
+            onPress={() => initZoom(data.init_sdk_jwt_token, 'zoom.us')}
+          />
+
+          <Button
+            disabled={data ? false : true}
+            title="joinMeeting"
             onPress={() =>
-              initZoom(
-                ZOOM_CONFIG.ZOOM_PUBLIC_KEY,
-                ZOOM_CONFIG.ZOOM_PRIVATE_KEY,
-                ZOOM_CONFIG.ZOOM_DOMAIN,
-              )
+              joinMeeting(`${data.meeting_id}`, data.meeting_password)
             }
           />
 
           <Button
-            title="joinMeeting"
-            // onPress={() => joinMeeting(userName, meetingNo, pwd)}
-          />
-
-          <Button
+            disabled={data ? false : true}
             title="start meeting"
-            // onPress={() =>
-            // startMeeting(
-            //   meetingNo,
-            //   userName,
-            //   userId,
-            //   ZOOM_CONFIG.JWT_API_KEY,
-            //   ZOOM_CONFIG.JWT_API_SECRET_KEY,
-            // )
-            // }
+            onPress={() =>
+              startMeeting({
+                meetingNumber: `${data.meeting_id}`,
+                zoomAccessToken: data.zoom_zak_token,
+                userId: data.user_zoom_id,
+                userName: 'dawi',
+                userType: 1,
+              })
+            }
           />
         </View>
       </ScrollView>

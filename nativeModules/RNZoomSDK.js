@@ -2,48 +2,28 @@ import {NativeModules} from 'react-native';
 
 const {zoom} = NativeModules;
 
-//to see what is loaded
-console.log(NativeModules);
+console.log(zoom);
 
-async function initZoom(publicKey, privateKey, domain) {
-  console.log('zoom', await zoom.isInitialized());
-  console.log('calling zoom', zoom.getConstants());
-  // const response = await zoom.initZoom(publicKey, privateKey, domain);
+const isInitialized = async () => await zoom.isInitialized();
 
-  // console.log('Response', response);
+async function initZoom(jwtToken, domain) {
+  const response = await zoom.initZoom(jwtToken, (domain = 'zoom.us'));
+  console.log('initZoom', response);
+  isInitialized();
 }
 
-async function joinMeeting(displayName = 'Stefan', meetingNo, password) {
-  console.log('calling zoom - join meeting', displayName, meetingNo, password);
-  const response = await zoom.joinMeeting(displayName, meetingNo, password);
+async function startMeeting(params) {
+  try {
+    const response = await zoom.startMeeting({...params});
+    console.log('startMeeting', response);
+  } catch (error) {
+    console.log('error', error);
+  }
+}
 
+async function joinMeeting(meetingNumber, meetingPassword) {
+  const response = await zoom.joinMeeting(meetingNumber, meetingPassword);
   console.log('Response - Join Meeting', response);
-}
-
-async function startMeeting(
-  meetingNumber,
-  username,
-  userId,
-  jwtAccessToken,
-  jwtApiKey,
-) {
-  console.log(
-    'calling zoom',
-    meetingNumber,
-    username,
-    userId,
-    jwtAccessToken,
-    jwtApiKey,
-  );
-  const response = await zoom.startMeeting(
-    meetingNumber,
-    username,
-    userId,
-    jwtAccessToken,
-    jwtApiKey,
-  );
-
-  console.log('Response - Start Meeting', response);
 }
 
 export {initZoom, joinMeeting, startMeeting};

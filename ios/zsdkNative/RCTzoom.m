@@ -5,25 +5,46 @@
 //  Created by Mahmoud Hamdy on 22/03/2022.
 //
 
-#import <Foundation/Foundation.h>
+#import <ReplayKit/ReplayKit.h>
 #import "RCTzoom.h"
-#import "ZoomManager.h"
-#import <MobileRTC/MobileRTC.h>
+//#import "ZoomManager.h"
 
 @implementation RCTzoom
 {
   BOOL isInitialized;
+  BOOL shouldAutoConnectAudio;
+  BOOL hasObservers;
+  RCTPromiseResolveBlock initializePromiseResolve;
+  RCTPromiseRejectBlock initializePromiseReject;
+  RCTPromiseResolveBlock meetingPromiseResolve;
+  RCTPromiseRejectBlock meetingPromiseReject;
+  // If screenShareExtension is set, the Share Content > Screen option will automatically be
+  // enabled in the UI
+  NSString *screenShareExtension;
+
+  NSString *jwtToken;
 }
+
+
 - (instancetype)init {
   if (self = [super init]) {
     isInitialized = NO;
+    initializePromiseResolve = nil;
+    initializePromiseReject = nil;
+    shouldAutoConnectAudio = nil;
+    meetingPromiseResolve = nil;
+    meetingPromiseReject = nil;
+    screenShareExtension = nil;
+    jwtToken = nil;
   }
   return self;
 }
 
-// this macro will export this class to React Native as zoom - RCT prefix is removed!
+// this macro will export this class to React Native as AwesomeZoomSDK - RCT prefix is removed!
 RCT_EXPORT_MODULE();
 
+
+// check if isInitialized
 RCT_EXPORT_METHOD(isInitialized: (RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
   @try {
     // todo check from ZoomSdk
@@ -34,192 +55,181 @@ RCT_EXPORT_METHOD(isInitialized: (RCTPromiseResolveBlock)resolve reject:(RCTProm
 }
 
 //let's init Zoom SDK
-RCT_EXPORT_METHOD(initZoom:(NSString *)publicKey
-                  privateKey:(NSString *)privateKey
+RCT_EXPORT_METHOD(initZoom:(NSString *)jwtToken
                   domain:(NSString *)domain
                   resolve: (RCTPromiseResolveBlock)resolve
                   reject: (RCTPromiseRejectBlock)reject)
 {
-  NSLog(@"Submitted init  request with %@ at %@, %@", publicKey, privateKey, domain);
-  
-  MobileRTCSDKInitContext *context = [[MobileRTCSDKInitContext alloc] init];
-  context.domain = domain;
-  context.enableLog = YES;
-  context.locale = MobileRTC_ZoomLocale_Default;
-
-  BOOL initializeSuc = [[MobileRTC sharedRTC] initialize:context];
-  NSLog(@"initializeContextSuccessful======>%@",@(initializeSuc));
-  NSLog(@"MobileRTC Version: %@", [[MobileRTC sharedRTC] mobileRTCVersion]);
-
-  //2nd.step
-  MobileRTCAuthService *authService = [[MobileRTC sharedRTC] getAuthService];
-  
-  if (authService == nil) {
-    reject(@"ZOOM_SDK", @"No auth service", nil);
+  if (isInitialized) {
+    resolve(@"Already initialize Zoom SDK successfully.");
+    return;
   }
-      // we need to implement calback - similar to listener in Android
-      authService.delegate = self;
-      authService.clientKey = publicKey;
-      authService.clientSecret = privateKey;
 
-  @try {
-    [authService sdkAuth];
-  } @catch (NSError *ex) {
-    reject(@"ZOOM_SDK", @"Failed to initialize", ex);
-  }
   
-  RCTLogInfo(@"ZOOM SDK submitted login request succesfull");
-  // NOW WHAT? // so, let'store our promise for later
-  self.initializePromiseResolve = resolve;
-  self.initializePromiseReject = reject;
+  MobileRTCSDKInitContext* initContext = [[MobileRTCSDKInitContext alloc] init];
+  initContext.domain = @"https://zoom.us";
+  // Set your Apple AppGroupID here
+  initContext.appGroupId = @"com.ouredu.net";
+  // Turn on SDK logging
+  initContext.enableLog = YES;
+  initContext.locale = MobileRTC_ZoomLocale_Default;
+  if ([[MobileRTC sharedRTC] initialize:initContext]) {
+      MobileRTCAuthService *authService = [[MobileRTC sharedRTC] getAuthService];
+      if (authService) {
+        @try {
+          authService.jwtToken = jwtToken;
+          authService.delegate = self;
+          [authService sdkAuth];
+          isInitialized = true;
+        } @catch (NSException *exception) {
+          NSLog(@"%@", jwtToken);
+        }
+      }
+  }
+
 }
 
 - (void)onMobileRTCAuthReturn:(MobileRTCAuthError)returnValue {
-  
-  // new naming standards ? Error__Success ???
-  if(returnValue == MobileRTCMeetError_Success){
-    NSLog(@"SDK LOG - Auth was initialized succesfully");
-    NSDictionary *resultDict;
-    resultDict  =  @{@"initialized": @"true"};
-    self.initializePromiseResolve(resultDict);
-  } else {
-    NSLog(@"SDK LOG - Auth was initialized with error");
-    self.initializePromiseReject(@"ZOOM_SDK", @"Auth Call Returned Error", nil);
-  }
-  //VOILA - ZOOM is initialized
+    switch (returnValue) {
+        case MobileRTCAuthError_Success:
+            NSLog(@"SDK successfully initialized.");
+            break;
+        case MobileRTCAuthError_KeyOrSecretEmpty:
+            NSLog(@"SDK key/secret was not provided. Replace sdkKey and sdkSecret at the top of this file with your SDK key/secret.");
+            break;
+        case MobileRTCAuthError_KeyOrSecretWrong:
+            NSLog(@"SDK key/secret is not valid.");
+            break;
+        case MobileRTCAuthError_Unknown:
+            NSLog(@"SDK key/secret is not valid.");
+            break;
+        default:
+            NSLog(@"SDK Authorization failed with MobileRTCAuthError: %u", returnValue);
+    }
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 //--------------------------------LOGIN-END
 
-// START-MEETING
-  
-RCT_EXPORT_METHOD(startMeeting:(NSString *)meetingNumber
-                  withUsername:(NSString *)username
-                  withUserId:(NSString *)userId
-                  withJwtAccessToken:(NSString *)jwtAccessToken
-                  withJwtApiKey:(NSString *) jwtApiKey
-                  resolve: (RCTPromiseResolveBlock)resolve
-                  reject: (RCTPromiseRejectBlock)reject)
-{
-  NSLog(@"Start meeting request with %@ at %@, %@", username, userId, meetingNumber);
-  MobileRTCMeetingService *ms = [[MobileRTC sharedRTC] getMeetingService];
-    if (ms) {
-        ms.delegate = self;
-
-      NSString * ZAK = [[ZoomManager sharedInstance] requestZAK:userId withJwtAccessToken:jwtAccessToken withJwtApiKey:jwtApiKey];
-
-      MobileRTCMeetingStartParam4WithoutLoginUser * params = [[[MobileRTCMeetingStartParam4WithoutLoginUser alloc]init] autorelease];
-      params.userType = MobileRTCUserType_APIUser;
-      params.meetingNumber = meetingNumber;
-      params.userName = username;
-      params.userID = userId; // mail
-      params.isAppShare = false;
-      params.zak = ZAK;
-
-      MobileRTCMeetError ret = [ms startMeetingWithStartParam:params];
-      NSLog(@"onMeetNow ret:%lu",ret);
-      return;
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 RCT_EXPORT_METHOD(
-                  joinMeeting: (NSString *)displayName
-                  withMeetingNo: (NSString *)meetingNo
-                  withPassword: (NSString *)password
-                  resolve: (RCTPromiseResolveBlock)resolve
-                  reject: (RCTPromiseRejectBlock)reject
+  startMeeting: (NSDictionary *)data
+  withResolve: (RCTPromiseResolveBlock)resolve
+  withReject: (RCTPromiseRejectBlock)reject
 )
 {
+ 
   @try {
-    NSLog(@"Connecting to the meeting %@, %@, %@", displayName, meetingNo, password);
-    if (![meetingNo length]){
-        NSLog(@"No meeting number, returning without any action");
-        return;
-    }
-
     MobileRTCMeetingService *ms = [[MobileRTC sharedRTC] getMeetingService];
     if (ms) {
-
-      NSLog(@"Joining meeting with %@, %@", displayName, meetingNo);
       ms.delegate = self;
+      
 
-      MobileRTCMeetingJoinParam * joinParam = [[[MobileRTCMeetingJoinParam alloc]init]autorelease];
-      joinParam.userName = displayName;
-      joinParam.meetingNumber = meetingNo;
-      joinParam.password = password != nil ? password : @"";
-
-      MobileRTCMeetError joinMeetingResult = [ms joinMeetingWithJoinParam:joinParam];
-      NSLog(@"onJoinaMeeting ret:%lu", joinMeetingResult);
-    } else {
-      NSLog(@"No meeting service present");
+      MobileRTCMeetingStartParam4WithoutLoginUser * params = [[MobileRTCMeetingStartParam4WithoutLoginUser alloc]init];
+      params.userName = data[@"userName"];
+      params.meetingNumber = data[@"meetingNumber"];
+      params.userID = data[@"userId"];
+      params.userType = 99;
+      params.zak = data[@"zoomAccessToken"];
+      MobileRTCMeetError startMeetingResult = [ms startMeetingWithStartParam:params];
+      NSLog(@"startMeeting, startMeetingResult=%lu", startMeetingResult);
     }
   } @catch (NSError *ex) {
-      NSLog(@"Exception");
-      reject(@"ERR_UNEXPECTED_EXCEPTION", @"Executing joinMeeting", ex);
+      reject(@"ERR_UNEXPECTED_EXCEPTION", @"Executing startMeeting", ex);
   }
 }
 
+
+// JOIN MEETING
+
+RCT_EXPORT_METHOD(
+ joinMeeting:(NSString *)meetingNumber meetingPassword:(NSString *)meetingPassword {
+  // Get MobileRTCMeetingService instance from sharedRTC
+   @try {
+     MobileRTCMeetingService *meetService = [[MobileRTC sharedRTC] getMeetingService];
+         if (meetService) {
+             MobileRTCMeetingJoinParam *joinParams = [[MobileRTCMeetingJoinParam alloc] init];
+             joinParams.meetingNumber = meetingNumber;
+             joinParams.password = meetingPassword;
+           [meetService joinMeetingWithJoinParam:joinParams];
+         }
+     }
+    @catch(NSError *ex){
+      NSLog(ex);
+   }
+ }
+ 
+)
+
 - (void)onMeetingStateChange:(MobileRTCMeetingState)state;
 {
-    NSLog(@"onMeetingStateChange:%lu", state);
+  NSString* statusString = [self formatStateToString:state];
+  NSLog(@"%@:", statusString);
 }
 
-- (void)onMeetingError:(MobileRTCMeetError)error message:(NSString *)message {
-    switch (error) {
-        case MobileRTCMeetError_PasswordError:
-            NSLog(@"Could not join or start meeting because the meeting password was incorrect.");
+- (NSString*)formatStateToString:(MobileRTCMeetingState)state {
+    NSString *result = nil;
+
+    // naming synced with android enum MeetingStatus
+    switch(state) {
+        case MobileRTCMeetingState_Connecting:
+            result = @"MEETING_STATUS_CONNECTING";
+            break;
+        case MobileRTCMeetingState_Idle:
+            result = @"MEETING_STATUS_IDLE";
+            break;
+        case MobileRTCMeetingState_Failed:
+            result = @"MEETING_STATUS_FAILED";
+            break;
+        case MobileRTCMeetingState_WebinarPromote:
+            result = @"MEETING_STATUS_WEBINAR_PROMOTE";
+            break;
+        case MobileRTCMeetingState_WebinarDePromote:
+            result = @"MEETING_STATUS_WEBINAR_DEPROMOTE";
+            break;
+        case MobileRTCMeetingState_InWaitingRoom:
+            result = @"MEETING_STATUS_IN_WAITING_ROOM";
+            break;
+        case MobileRTCMeetingState_WaitingForHost:
+            result = @"MEETING_STATUS_WAITINGFORHOST";
+            break;
+        case MobileRTCMeetingState_Disconnecting:
+            result = @"MEETING_STATUS_DISCONNECTING";
+            break;
+        case MobileRTCMeetingState_InMeeting:
+            result = @"MEETING_STATUS_INMEETING";
+            break;
+        case MobileRTCMeetingState_Reconnecting:
+            result = @"MEETING_STATUS_RECONNECTING";
+            break;
+        case MobileRTCMeetingState_Unknow:
+            result = @"MEETING_STATUS_UNKNOWN";
+            break;
+
+        // only iOS (guessed naming)
+        case MobileRTCMeetingState_WaitingExternalSessionKey:
+            result = @"MEETING_STATUS_WAITING_EXTERNAL_SESSION_KEY";
+            break;
+        case MobileRTCMeetingState_Ended:
+            result = @"MEETING_STATUS_ENDED";
+            break;
+        case MobileRTCMeetingState_Locked:
+            result = @"MEETING_STATUS_LOCKED";
+            break;
+        case MobileRTCMeetingState_Unlocked:
+            result = @"MEETING_STATUS_UNLOCKED";
+            break;
+        case MobileRTCMeetingState_JoinBO:
+            result = @"MEETING_STATUS_JOIN_BO";
+            break;
+        case MobileRTCMeetingState_LeaveBO:
+            result = @"MEETING_STATUS_LEAVE_BO";
+            break;
+
         default:
-            NSLog(@"Could not join or start meeting with MobileRTCMeetError: %lu %@", error, message);
+            [NSException raise:NSGenericException format:@"Unexpected state."];
     }
+
+    return result;
 }
-
-
-- (void)onJoinMeetingConfirmed {
-    NSLog(@"Join meeting confirmed.");
-}
-
-
-
-
-
-
 // TODO - neccesary
 + (BOOL)requiresMainQueueSetup
 {
@@ -232,4 +242,3 @@ RCT_EXPORT_METHOD(
 }
 
 @end
-
