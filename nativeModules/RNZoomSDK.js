@@ -7,17 +7,22 @@ console.log(zoom);
 const isInitialized = async () => await zoom.isInitialized();
 
 async function initZoom(jwtToken, domain) {
+  console.log('isInitialized', await isInitialized());
   const response = await zoom.initZoom(jwtToken, (domain = 'zoom.us'));
   console.log('initZoom', response);
-  isInitialized();
+  console.log('isInitialized', await isInitialized());
 }
 
 async function startMeeting(params) {
-  try {
-    const response = await zoom.startMeeting({...params});
-    console.log('startMeeting', response);
-  } catch (error) {
-    console.log('error', error);
+  if (await isInitialized()) {
+    try {
+      const response = await zoom.startMeeting({...params});
+      console.log('startMeeting', response);
+    } catch (error) {
+      console.log('error', error);
+    }
+  } else {
+    console.log('Please Initializ first');
   }
 }
 
